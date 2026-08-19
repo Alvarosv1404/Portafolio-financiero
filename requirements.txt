@@ -1,0 +1,24 @@
+#--Manipulación de datos--
+pandas #dataframe
+numpy #calculos  de vectores y matrices
+#--Obtención de datos--
+yfinance #acciones
+requests #permite llamar apis
+python-dotenv #leer archivos de .venv
+#--Almacenamiento de cache--
+pyarrow # leer y escribir archivos .parquet
+#--Visualización de datos--
+#matplotlib>=2.1.0,>3.0.0 #graficos
+#seaborn>=2.1.0,>3.0.0 #genera graficos estadisticos
+#--Optimización de portafolios
+#scipy>=2.1.0,>3.0.0 #modulo de optimizacion para los portafolios
+#cvxpy>=2.1.0,>3.0.0 #optimizacion convexa avanzada para el risk y restricciones
+#--Maching learning
+#scikit-learn>=2.1.0,>3.0.0 #libreria de maching learning
+#--Estadisitca bayesiana
+#pymc>=2.1.0,>3.0.0 #modelos econometricos
+#statsmodels>=2.1.0,>3.0.0 #modelos economericos
+#--Notebooks
+#jupyter>=2.1.0,>3.0.0 #corre los .ipynb
+#--Testing
+#pytest>=2.1.0,>3.0.0 #estándar para correr test

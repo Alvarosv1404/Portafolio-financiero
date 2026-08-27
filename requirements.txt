@@ -5,6 +5,7 @@ numpy #calculos  de vectores y matrices
 yfinance #acciones
 requests #permite llamar apis
 python-dotenv #leer archivos de .venv
+openpyxl 
 #--Almacenamiento de cache--
 pyarrow # leer y escribir archivos .parquet
 #--Visualización de datos--

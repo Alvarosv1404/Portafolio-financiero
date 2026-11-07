@@ -1,7 +1,8 @@
-import { providerComparison } from '../data/mockData'
+import { useDashboard } from '../data/DashboardContext'
 import { StatusBadge } from './StatusBadge'
 
 export function ProviderComparison() {
+  const { data } = useDashboard()
   return (
     <section className="panel">
       <div className="panel-head">
@@ -25,7 +26,7 @@ export function ProviderComparison() {
             </tr>
           </thead>
           <tbody>
-            {providerComparison.map((row) => (
+            {data.providerComparison.map((row) => (
               <tr key={row.provider}>
                 <td>
                   <strong>{row.provider}</strong>

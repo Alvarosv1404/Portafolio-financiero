@@ -8,9 +8,12 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { sectorData } from '../data/mockData'
+import { useDashboard } from '../data/DashboardContext'
 
 export function SectorChart() {
+  const { data } = useDashboard()
+  const sectors = data.sectors
+  const maxWeight = Math.max(...sectors.map((sector) => sector.weight), 1)
   return (
     <section className="panel">
       <div className="panel-head">
@@ -18,14 +21,14 @@ export function SectorChart() {
           <span className="panel-kicker">Distribución</span>
           <h3>Peso por sector</h3>
         </div>
-        <span className="panel-note">11 sectores</span>
+        <span className="panel-note">{sectors.length} sectores</span>
       </div>
 
       <div className="chart-wrap">
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={sectorData} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
+          <BarChart data={sectors} layout="vertical" margin={{ top: 4, right: 16, left: 4, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.1)" horizontal={false} />
-            <XAxis type="number" hide domain={[0, 28]} />
+            <XAxis type="number" hide domain={[0, Math.ceil(maxWeight * 1.15)]} />
             <YAxis
               type="category"
               dataKey="short"
@@ -46,7 +49,7 @@ export function SectorChart() {
               formatter={(value) => [`${value}%`, 'Peso']}
             />
             <Bar dataKey="weight" radius={[0, 8, 8, 0]} barSize={13}>
-              {sectorData.map((sector) => (
+              {sectors.map((sector) => (
                 <Cell key={sector.sector} fill={sector.color} />
               ))}
             </Bar>

@@ -7,8 +7,8 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { providers } from '../data/mockData'
-import type { ProviderStatus } from '../data/mockData'
+import { useDashboard } from '../data/DashboardContext'
+import type { ProviderStatus } from '../data/types'
 import { StatusBadge } from './StatusBadge'
 
 const statusMeta: Record<ProviderStatus, { label: string; tone: 'success' | 'info' | 'warning' }> = {
@@ -31,6 +31,8 @@ interface ProviderGridProps {
 }
 
 export function ProviderGrid({ limit }: ProviderGridProps) {
+  const { data } = useDashboard()
+  const providers = data.providers
   const visible = typeof limit === 'number' ? providers.slice(0, limit) : providers
 
   return (

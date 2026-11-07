@@ -11,16 +11,18 @@ import {
   YAxis,
 } from 'recharts'
 import { BrainCircuit, CalendarRange, Crosshair, Percent } from 'lucide-react'
-import { forecastSeries } from '../data/mockData'
-
-const metrics = [
-  { label: 'Modelo', value: 'ARIMA(2,1,2)', icon: BrainCircuit },
-  { label: 'AIC', value: '1842.6', icon: Crosshair },
-  { label: 'MAPE', value: '3.8%', icon: Percent },
-  { label: 'Horizonte', value: '6 meses', icon: CalendarRange },
-]
+import { useDashboard } from '../data/DashboardContext'
 
 export function ForecastPanel() {
+  const { data } = useDashboard()
+  const forecast = data.forecast
+  const metrics = [
+    { label: 'Modelo', value: forecast.model, icon: BrainCircuit },
+    { label: 'AIC', value: forecast.aic !== null ? forecast.aic.toLocaleString('es-PE') : '—', icon: Crosshair },
+    { label: 'MAPE', value: forecast.mape !== null ? `${forecast.mape.toFixed(1)}%` : '—', icon: Percent },
+    { label: 'Horizonte', value: `${forecast.horizonMonths} meses`, icon: CalendarRange },
+  ]
+  const lastActual = [...forecast.series].reverse().find((point) => point.actual !== null)
   return (
     <div className="stack">
       <div className="metric-strip">
@@ -46,15 +48,15 @@ export function ForecastPanel() {
 
         <div className="chart-wrap">
           <ResponsiveContainer width="100%" height={330}>
-            <ComposedChart data={forecastSeries} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+            <ComposedChart data={forecast.series} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.12)" vertical={false} />
               <XAxis dataKey="date" tick={{ fill: '#8b9bb4', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis
-                domain={[104, 124]}
+                domain={['auto', 'auto']}
                 tick={{ fill: '#8b9bb4', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(value) => String(value)}
+                tickFormatter={(value) => String(Math.round(Number(value)))}
               />
               <Tooltip
                 contentStyle={{
@@ -100,7 +102,7 @@ export function ForecastPanel() {
                 connectNulls={false}
               />
               <ReferenceLine
-                x="Dic"
+                x={lastActual?.date}
                 stroke="rgba(148, 163, 184, 0.45)"
                 strokeDasharray="4 4"
                 label={{ value: 'Hoy', fill: '#94a3b8', fontSize: 11, position: 'insideTopRight' }}
@@ -115,10 +117,17 @@ export function ForecastPanel() {
         <div>
           <strong>Buenas prácticas aplicadas</strong>
           <p>
-            El modelo se entrena con retornos logarítmicos, no con precios en niveles. Se valida con
-            ventanas walk-forward y se reporta MAPE fuera de muestra. En la siguiente fase se conectará
-            con statsmodels y se comparará contra un baseline naive.
+            El modelo se entrena con el logaritmo del precio del portafolio y se valida con una
+            partición fuera de muestra para reportar MAPE. Por la naturaleza de ARIMA sobre precios, el
+            pronóstico converge al último nivel y la banda se amplía con el horizonte. No es una
+            predicción de mercado: es una referencia estadística.
           </p>
+          {forecast.usedFallback && (
+            <p>
+              En esta ejecución ARIMA no convergió y se usó el pronóstico ingenuo (último valor
+              conocido). Revisa la sección de auditoría o vuelve a actualizar los datos.
+            </p>
+          )}
         </div>
       </section>
     </div>

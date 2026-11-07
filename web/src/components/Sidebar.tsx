@@ -28,9 +28,10 @@ const navItems: NavItem[] = [
 interface SidebarProps {
   active: View
   onChange: (view: View) => void
+  isLive: boolean
 }
 
-export function Sidebar({ active, onChange }: SidebarProps) {
+export function Sidebar({ active, onChange, isLive }: SidebarProps) {
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -66,11 +67,15 @@ export function Sidebar({ active, onChange }: SidebarProps) {
 
       <div className="sidebar-card">
         <div className="sidebar-card-head">
-          <span className="status-dot" />
+          <span className={`status-dot ${isLive ? '' : 'offline'}`} />
           Motor Python
         </div>
-        <strong>v0.1.0 · Demo</strong>
-        <p>Datos simulados. La conexión con el backend se habilita en la siguiente fase.</p>
+        <strong>v0.1.0 · {isLive ? 'En vivo' : 'Demo'}</strong>
+        <p>
+          {isLive
+            ? 'Precios reales de yfinance, Markowitz y ARIMA calculados en el backend.'
+            : 'Sin conexión al backend. Se muestran datos de respaldo.'}
+        </p>
       </div>
 
       <div className="sidebar-footer">

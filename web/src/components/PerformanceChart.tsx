@@ -8,10 +8,12 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { portfolioSeries } from '../data/mockData'
+import { useDashboard } from '../data/DashboardContext'
 import { StatusBadge } from './StatusBadge'
 
 export function PerformanceChart() {
+  const { data } = useDashboard()
+  const ytd = data.metrics.ytdReturn * 100
   return (
     <section className="panel chart-panel">
       <div className="panel-head">
@@ -21,13 +23,16 @@ export function PerformanceChart() {
         </div>
         <div className="panel-tags">
           <StatusBadge tone="neutral">Base 100</StatusBadge>
-          <StatusBadge tone="success">+14.8% YTD</StatusBadge>
+          <StatusBadge tone={ytd >= 0 ? 'success' : 'danger'}>
+            {ytd >= 0 ? '+' : ''}
+            {ytd.toFixed(1)}% YTD
+          </StatusBadge>
         </div>
       </div>
 
       <div className="chart-wrap">
         <ResponsiveContainer width="100%" height={310}>
-          <AreaChart data={portfolioSeries} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+          <AreaChart data={data.performance} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
             <defs>
               <linearGradient id="portfolioFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#2dd4bf" stopOpacity={0.32} />
@@ -45,7 +50,7 @@ export function PerformanceChart() {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.12)" vertical={false} />
             <XAxis dataKey="month" tick={{ fill: '#8b9bb4', fontSize: 11 }} axisLine={false} tickLine={false} />
             <YAxis
-              domain={[96, 120]}
+              domain={['auto', 'auto']}
               tick={{ fill: '#8b9bb4', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
@@ -88,7 +93,7 @@ export function PerformanceChart() {
             <Area
               type="monotone"
               dataKey="bonos"
-              name="Bonos"
+              name="Bonos (rf)"
               stroke="#a78bfa"
               strokeWidth={1.6}
               fill="url(#bondsFill)"

@@ -9,16 +9,31 @@ import {
   YAxis,
 } from 'recharts'
 import { Gauge, SlidersHorizontal, Sparkles, Target } from 'lucide-react'
-import { assetRiskReturn, frontierData, optimalAllocation } from '../data/mockData'
-
-const metrics = [
-  { label: 'Retorno esperado', value: '13.7%', icon: Target },
-  { label: 'Volatilidad', value: '10.8%', icon: Gauge },
-  { label: 'Sharpe', value: '1.58', icon: Sparkles },
-  { label: 'Máx. peso', value: '18.0%', icon: SlidersHorizontal },
-]
+import { useDashboard } from '../data/DashboardContext'
 
 export function OptimizationPanel() {
+  const { data } = useDashboard()
+  const optimization = data.optimization
+  const metrics = [
+    { label: 'Retorno esperado', value: `${(optimization.expectedReturn * 100).toFixed(1)}%`, icon: Target },
+    { label: 'Volatilidad', value: `${(optimization.volatility * 100).toFixed(1)}%`, icon: Gauge },
+    { label: 'Sharpe', value: optimization.sharpe.toFixed(2), icon: Sparkles },
+    { label: 'Máx. peso', value: `${(optimization.maxWeight * 100).toFixed(1)}%`, icon: SlidersHorizontal },
+  ]
+  const optimal =
+    data.frontier.find((point) => point.label === 'Óptimo') ?? {
+      risk: optimization.volatility * 100,
+      return: optimization.expectedReturn * 100,
+    }
+  const maxRisk = Math.ceil(
+    Math.max(...data.frontier.map((point) => point.risk), ...data.assetRiskReturn.map((asset) => asset.risk)) * 1.1,
+  )
+  const maxReturn = Math.ceil(
+    Math.max(
+      ...data.frontier.map((point) => point.return),
+      ...data.assetRiskReturn.map((asset) => asset.return),
+    ) * 1.1,
+  )
   return (
     <div className="stack">
       <div className="metric-strip">
@@ -51,7 +66,7 @@ export function OptimizationPanel() {
                 dataKey="risk"
                 name="Riesgo"
                 unit="%"
-                domain={[0, 36]}
+                domain={[0, maxRisk]}
                 tick={{ fill: '#8b9bb4', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
@@ -61,7 +76,7 @@ export function OptimizationPanel() {
                 dataKey="return"
                 name="Retorno"
                 unit="%"
-                domain={[0, 28]}
+                domain={[0, maxReturn]}
                 tick={{ fill: '#8b9bb4', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
@@ -79,14 +94,14 @@ export function OptimizationPanel() {
               />
               <Scatter
                 name="Frontera eficiente"
-                data={frontierData}
+                data={data.frontier}
                 fill="#2dd4bf"
                 line={{ stroke: '#2dd4bf', strokeWidth: 2 }}
               />
-              <Scatter name="Activos" data={assetRiskReturn} fill="#fbbf24" />
+              <Scatter name="Activos" data={data.assetRiskReturn} fill="#fbbf24" />
               <ReferenceDot
-                x={10.8}
-                y={13.7}
+                x={optimal.risk}
+                y={optimal.return}
                 r={7}
                 fill="#fb7185"
                 stroke="#f8fafc"
@@ -109,7 +124,7 @@ export function OptimizationPanel() {
           </div>
 
           <div className="allocation-list">
-            {optimalAllocation.map((item) => (
+            {data.allocation.map((item) => (
               <div key={item.name} className="allocation-row">
                 <div className="allocation-label">
                   <span className="allocation-dot" style={{ background: item.color }} />
@@ -129,15 +144,16 @@ export function OptimizationPanel() {
           <div>
             <strong>Restricciones del modelo</strong>
             <p>
-              Sin posiciones en corto, suma de pesos igual a 1, máximo 18% por activo y covarianza con
-              shrinkage para reducir el error de estimación. La frontera se calcula con datos simulados
-              en esta demo; el motor Python entregará los pesos reales vía API.
+              Sin posiciones en corto, suma de pesos igual a 1, máximo{' '}
+              {(optimization.maxWeight * 100).toFixed(0)}% por activo y covarianza con contracción
+              hacia la diagonal. La frontera y los pesos se calculan con precios reales de yfinance;
+              por ahora es una estimación in-sample.
             </p>
             <ul className="check-list">
               <li>Sin ventas en corto</li>
-              <li>Máximo 18% por activo</li>
-              <li>Covarianza Ledoit-Wolf</li>
-              <li>Backtest out-of-sample</li>
+              <li>Máximo {(optimization.maxWeight * 100).toFixed(0)}% por activo</li>
+              <li>Covarianza con shrinkage</li>
+              <li>{optimization.positions} posiciones con peso {'>'} 0.1%</li>
             </ul>
           </div>
         </section>

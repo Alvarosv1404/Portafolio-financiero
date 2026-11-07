@@ -1,8 +1,11 @@
 import { AlertTriangle, CheckCircle2, Info, ShieldCheck } from 'lucide-react'
-import { auditChecks, auditIssues } from '../data/mockData'
+import { useDashboard } from '../data/DashboardContext'
 import { StatusBadge } from './StatusBadge'
 
 export function AuditPanel() {
+  const { data } = useDashboard()
+  const issues = data.auditIssues
+  const warnings = data.auditChecks.filter((check) => check.status !== 'ok').length
   return (
     <div className="stack">
       <section className="panel audit-banner">
@@ -12,12 +15,14 @@ export function AuditPanel() {
         <div>
           <strong>Auditoría de datos activa</strong>
           <p>
-            Se validaron 503 activos y 11 sectores. Hay 3 observaciones menores y 1 advertencia de sesgo
-            de supervivencia por usar los constituyentes actuales del S&P 500.
+            Se validaron {data.meta.universeSize} activos y {data.metrics.sectorsCount} sectores sobre{' '}
+            {data.auditSummary.rows.toLocaleString('es-PE')} filas. Cobertura{' '}
+            {(data.auditSummary.coverage * 100).toFixed(1)}% y {issues.length} observaciones
+            registradas.
           </p>
         </div>
-        <StatusBadge tone="warning" dot>
-          Revisar
+        <StatusBadge tone={warnings ? 'warning' : 'success'} dot>
+          {warnings ? `${warnings} alertas` : 'Sin alertas'}
         </StatusBadge>
       </section>
 
@@ -27,11 +32,11 @@ export function AuditPanel() {
             <span className="panel-kicker">Controles</span>
             <h3>Chequeos de calidad</h3>
           </div>
-          <span className="panel-note">6 controles</span>
+          <span className="panel-note">{data.auditChecks.length} controles</span>
         </div>
 
         <div className="audit-grid">
-          {auditChecks.map((check) => {
+          {data.auditChecks.map((check) => {
             const ok = check.status === 'ok'
             const Icon = ok ? CheckCircle2 : AlertTriangle
             return (
@@ -54,7 +59,7 @@ export function AuditPanel() {
             <span className="panel-kicker">Incidencias</span>
             <h3>Observaciones detectadas</h3>
           </div>
-          <StatusBadge tone="neutral">4 registros</StatusBadge>
+          <StatusBadge tone="neutral">{issues.length} registros</StatusBadge>
         </div>
 
         <div className="table-wrap">
@@ -70,7 +75,7 @@ export function AuditPanel() {
               </tr>
             </thead>
             <tbody>
-              {auditIssues.map((issue) => (
+              {issues.map((issue) => (
                 <tr key={issue.id}>
                   <td className="mono">{issue.id}</td>
                   <td>
@@ -104,10 +109,10 @@ export function AuditPanel() {
         <div>
           <strong>¿Por qué importa el sesgo de supervivencia?</strong>
           <p>
-            El Excel contiene las empresas que hoy pertenecen al S&P 500. Un backtest histórico con esa
-            lista elimina a las empresas que quebraron o salieron del índice, por lo que el rendimiento
-            pasado puede verse mejor de lo que realmente fue. La solución es usar constituyentes
-            históricos (point-in-time) o documentar la limitación en los reportes.
+            El universo usa empresas que hoy cotizan. Un backtest con esa lista elimina a las empresas
+            que quebraron o salieron del índice, por lo que el rendimiento pasado puede verse mejor de
+            lo que realmente fue. La solución es usar constituyentes históricos (point-in-time) o
+            documentar la limitación en los reportes.
           </p>
         </div>
       </section>

@@ -209,6 +209,11 @@
   box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12);
 }
 
+.status-dot.offline {
+  background: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.12);
+}
+
 .sidebar-card strong {
   display: block;
   color: #dce8f5;
@@ -329,6 +334,12 @@
   white-space: nowrap;
 }
 
+.demo-pill.live {
+  border-color: rgba(52, 211, 153, 0.24);
+  background: rgba(52, 211, 153, 0.1);
+  color: #6ee7b7;
+}
+
 .icon-button {
   position: relative;
   display: grid;
@@ -347,6 +358,21 @@
 .icon-button:hover {
   background: rgba(30, 41, 59, 0.8);
   color: #e2e8f0;
+}
+
+.icon-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .icon-button.has-dot::after {
@@ -1108,6 +1134,46 @@ tbody tr:last-child td {
     radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.1), transparent 40%),
     linear-gradient(90deg, rgba(17, 26, 40, 0.92), rgba(10, 17, 28, 0.9));
   padding: 14px 17px;
+}
+
+.demo-banner.live-banner {
+  border-color: rgba(52, 211, 153, 0.18);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(52, 211, 153, 0.1), transparent 40%),
+    linear-gradient(90deg, rgba(17, 26, 40, 0.92), rgba(10, 17, 28, 0.9));
+}
+
+.demo-banner.live-banner .demo-banner-icon {
+  border-color: rgba(52, 211, 153, 0.2);
+  background: rgba(52, 211, 153, 0.08);
+  color: #6ee7b7;
+}
+
+.banner-warnings {
+  display: grid;
+  gap: 3px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.banner-warnings li {
+  position: relative;
+  padding-left: 13px;
+  color: #a3b2c6;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.banner-warnings li::before {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fbbf24;
+  content: '';
 }
 
 .demo-banner-icon {

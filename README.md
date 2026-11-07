@@ -11,19 +11,22 @@ Herramienta cuantitativa en Python para el filtrado, auditoría y evaluación au
 - [x] Lectura del universo de activos desde Excel.
 - [x] Descarga histórica con yfinance.
 - [x] Notebooks de exploración (sin credenciales hardcodeadas).
-- [x] Dashboard web demo con React + Vite (datos simulados).
-- [ ] Capa de proveedores intercambiables y caché local.
-- [ ] Comparación de proveedores y auditoría de calidad de datos.
-- [ ] ARIMA con validación walk-forward.
-- [ ] Markowitz con restricciones y backtest.
+- [x] Capa de datos con yfinance, limpieza y caché en disco.
+- [x] Auditoría de calidad (gaps, outliers, cobertura, movimientos extremos).
+- [x] Markowitz: máximo Sharpe y frontera eficiente con restricciones.
+- [x] ARIMA sobre el portafolio con validación fuera de muestra.
+- [x] API FastAPI y dashboard web conectado.
+- [x] Dashboard accesible por Tailscale.
+- [ ] Comparación automática entre proveedores alternativos.
+- [ ] Backtest walk-forward (out-of-sample real).
 - [ ] Proveedor Excel/CSV para datos manuales (Perú y derivados).
+- [ ] Autenticación si se expone fuera de la red privada.
 
 ## Requisitos
 
 - Python 3.11 o superior.
 - Node.js 20 o superior (para el dashboard web).
-- Git.
-- Windows, macOS o Linux.
+- Git.- Windows, macOS o Linux.
 
 ## Instalación
 
@@ -31,7 +34,7 @@ Herramienta cuantitativa en Python para el filtrado, auditoría y evaluación au
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-pip install -e ".[dev,providers]"
+pip install -e ".[dev,providers,api]"
 ```
 
 En Linux/macOS:
@@ -40,7 +43,7 @@ En Linux/macOS:
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-pip install -e ".[dev,providers]"
+pip install -e ".[dev,providers,api]"
 ```
 
 ## Configuración de credenciales
@@ -90,11 +93,19 @@ Variables disponibles:
 │   └── Ideal portafolio.ipynb
 ├── src/quant_engine/
 │   ├── config.py             # configuración tipada
+│   ├── universe.py           # universo y metadatos de activos
+│   ├── service.py            # descarga, cálculo y payload del dashboard
+│   ├── analytics/
+│   │   ├── stats.py          # retornos, volatilidad, drawdown
+│   │   ├── optimization.py   # máximo Sharpe y frontera eficiente
+│   │   └── forecast.py       # ARIMA y bandas de confianza
+│   ├── audit/quality.py      # controles de calidad de datos
+│   ├── api/app.py            # API FastAPI
 │   └── ingestion/
 │       ├── base_provider.py  # contrato DataProvider
 │       └── dt_yfinance.py    # adaptador yfinance
 ├── tests/
-├── web/                      # dashboard React + Vite (demo)
+├── web/                      # dashboard React + Vite
 ├── pyproject.toml
 └── requirements.txt
 ```
@@ -111,9 +122,37 @@ finanzas = cierre_sect_yf(universo, "Financials", "2023-02-01", "2023-09-01")
 finanzas.head()
 ```
 
+## API del motor
+
+Terminal 1, desde la raíz:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m uvicorn quant_engine.api.app:app --host 0.0.0.0 --port 8000
+```
+
+Endpoints:
+
+| Endpoint | Uso |
+|---|---|
+| `GET /api/health` | Estado del servicio |
+| `GET /api/universe` | Universo por defecto y benchmark |
+| `GET /api/dashboard` | Dashboard completo calculado con datos reales |
+
+Parámetros de `/api/dashboard`:
+
+- `refresh=true`: ignora la caché de 15 minutos.
+- `tickers=AAPL,MSFT,...`: universo personalizado.
+- `start`, `end`: ventana histórica en ISO.
+- `max_weight`: tope por activo (por defecto `0.18`).
+- `risk_free`: tasa libre de riesgo anual (por defecto `0.04`).
+- `capital`: capital simulado para el KPI de valor (por defecto `100000`).
+
+Si yfinance falla, la API devuelve la última copia guardada en `data/cache/dashboard.json` y marca `meta.stale = true`.
+
 ## Dashboard web
 
-La idea del producto se puede navegar desde ya con datos simulados, mientras el motor Python se prueba en Jupyter.
+Terminal 2:
 
 ```powershell
 cd web
@@ -121,15 +160,41 @@ npm install
 npm run dev
 ```
 
-Abre `http://localhost:5173`. Vistas incluidas: Resumen, Datos, Auditoría, ARIMA y Markowitz.
+Abre `http://localhost:5173`. Vistas incluidas: Resumen, Datos, Auditoría, ARIMA y Markowitz. La web consume `/api/dashboard` a través del proxy de Vite y refresca cada 5 minutos.
 
-> La web es una demo visual: `web/src/data/mockData.ts` contiene datos de ejemplo. Todavía no consume el motor Python. El siguiente paso es exponer el motor con una API (FastAPI recomendado) y reemplazar los datos simulados por respuestas reales.
+### Abrir desde otro dispositivo (Tailscale)
+
+Vite escucha en todas las interfaces. Obtén la IP privada:
+
+```powershell
+tailscale ip -4
+```
+
+Y abre desde tu otro equipo o teléfono:
+
+```text
+http://<IP-TAILSCALE>:5173
+```
+
+La API no se expone aparte: Vite proxya `/api` hacia `127.0.0.1:8000`. Mantén el acceso dentro de tu tailnet; no publiques el puerto a Internet.
+
+### Qué se calcula de verdad
+
+1. yfinance descarga cierres ajustados de 20 activos + SPY (3 años).
+2. Se limpian precios, se calculan retornos logarítmicos y la covarianza anualizada con contracción.
+3. Markowitz maximiza el Sharpe (suma 1, sin cortos, tope por activo) y genera la frontera eficiente.
+4. ARIMA se ajusta sobre el logaritmo del precio del portafolio y se valida con una partición fuera de muestra.
+5. La auditoría revisa gaps contra el calendario real de SPY, nulos, precios inválidos, outliers y movimientos extremos.
+
+> Limitación actual: la performance es **in-sample**, porque los pesos se estiman con el mismo periodo que se evalúa. El siguiente paso es un backtest walk-forward. Los datos son educativos y no constituyen asesoría financiera.
 
 ## Tests
 
 ```powershell
 pytest
 ```
+
+Cubren configuración, ingesta, estadística, optimización, auditoría, ARIMA y el payload del servicio con precios sintéticos (sin depender de la red).
 
 ## Proveedores de datos
 

@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
-import { assets } from '../data/mockData'
-import type { Signal } from '../data/mockData'
+import { useDashboard } from '../data/DashboardContext'
+import type { Signal } from '../data/types'
 import { StatusBadge } from './StatusBadge'
 
 const signalTone: Record<Signal, 'success' | 'info' | 'warning' | 'danger'> = {
@@ -11,6 +11,7 @@ const signalTone: Record<Signal, 'success' | 'info' | 'warning' | 'danger'> = {
 }
 
 export function AssetsTable() {
+  const { data } = useDashboard()
   return (
     <section className="panel">
       <div className="panel-head">
@@ -18,7 +19,9 @@ export function AssetsTable() {
           <span className="panel-kicker">Universo</span>
           <h3>Activos destacados</h3>
         </div>
-        <span className="panel-note">8 de 503 activos</span>
+        <span className="panel-note">
+          {data.assets.length} de {data.meta.universeSize} activos
+        </span>
       </div>
 
       <div className="table-wrap">
@@ -31,11 +34,11 @@ export function AssetsTable() {
               <th className="num">Día</th>
               <th className="num">Peso</th>
               <th>Señal</th>
-              <th className="num">ARIMA</th>
+              <th className="num">Mom. 20d</th>
             </tr>
           </thead>
           <tbody>
-            {assets.map((asset) => (
+            {data.assets.map((asset) => (
               <tr key={asset.ticker}>
                 <td>
                   <div className="ticker-cell">

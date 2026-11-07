@@ -11,6 +11,7 @@ Herramienta cuantitativa en Python para el filtrado, auditoría y evaluación au
 - [x] Lectura del universo de activos desde Excel.
 - [x] Descarga histórica con yfinance.
 - [x] Notebooks de exploración (sin credenciales hardcodeadas).
+- [x] Dashboard web demo con React + Vite (datos simulados).
 - [ ] Capa de proveedores intercambiables y caché local.
 - [ ] Comparación de proveedores y auditoría de calidad de datos.
 - [ ] ARIMA con validación walk-forward.
@@ -20,6 +21,7 @@ Herramienta cuantitativa en Python para el filtrado, auditoría y evaluación au
 ## Requisitos
 
 - Python 3.11 o superior.
+- Node.js 20 o superior (para el dashboard web).
 - Git.
 - Windows, macOS o Linux.
 
@@ -92,6 +94,7 @@ Variables disponibles:
 │       ├── base_provider.py  # contrato DataProvider
 │       └── dt_yfinance.py    # adaptador yfinance
 ├── tests/
+├── web/                      # dashboard React + Vite (demo)
 ├── pyproject.toml
 └── requirements.txt
 ```
@@ -107,6 +110,20 @@ universo = cargar_universo("config/SP500_yfinance.xlsx")
 finanzas = cierre_sect_yf(universo, "Financials", "2023-02-01", "2023-09-01")
 finanzas.head()
 ```
+
+## Dashboard web
+
+La idea del producto se puede navegar desde ya con datos simulados, mientras el motor Python se prueba en Jupyter.
+
+```powershell
+cd web
+npm install
+npm run dev
+```
+
+Abre `http://localhost:5173`. Vistas incluidas: Resumen, Datos, Auditoría, ARIMA y Markowitz.
+
+> La web es una demo visual: `web/src/data/mockData.ts` contiene datos de ejemplo. Todavía no consume el motor Python. El siguiente paso es exponer el motor con una API (FastAPI recomendado) y reemplazar los datos simulados por respuestas reales.
 
 ## Tests
 

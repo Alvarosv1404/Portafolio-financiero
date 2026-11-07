@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quant-engine"
+version = "0.1.0"
+description = "Motor de auditoría y optimización de portafolios con datos públicos."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Alvarosv1404" }]
+dependencies = [
+    "pandas==3.0.5",
+    "numpy==2.5.2",
+    "yfinance==1.6.0",
+    "requests==2.34.2",
+    "python-dotenv==1.2.4",
+    "openpyxl==3.1.5",
+    "pyarrow==26.0.1",
+    "matplotlib==3.11.1",
+]
+
+[project.optional-dependencies]
+providers = [
+    "twelvedata==1.4.0",
+    "finnhub-python==2.4.29",
+    "websocket-client==1.9.0",
+]
+dev = [
+    "pytest==9.2.0",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"

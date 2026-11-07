@@ -1,7 +1,19 @@
 .venv/
 data/
+
+# Credenciales: el .env real nunca se versiona.
+.env
+.env.*
+!.env.example
 config/.env
-*.env
+config/.env.*
+!config/.env.example
+
+# Caché y artefactos locales.
+*.parquet
+*.jsonl
+*.log
+
 __pycache__/
 *.pyc
 .ipynb_checkpoints/

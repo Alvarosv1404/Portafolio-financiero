@@ -15,6 +15,12 @@ Herramienta cuantitativa en Python para el filtrado, auditoría y evaluación au
 - [x] Auditoría de calidad (gaps, outliers, cobertura, movimientos extremos).
 - [x] Markowitz: máximo Sharpe y frontera eficiente con restricciones.
 - [x] ARIMA sobre el portafolio con validación fuera de muestra.
+- [x] ARIMA por activo con ADF/KPSS, Ljung-Box, Jarque-Bera, ARCH-LM, raíces y MAPE.
+- [x] 5 carteras sobre la misma frontera (bajo riesgo, moderado, ideal, riesgoso y total).
+- [x] Top 10 por score compuesto y reoptimización de la cartera.
+- [x] Simulador de inversión con acciones enteras y efectivo residual.
+- [x] GARCH(1,1) para la cartera y para cada activo del Top 10.
+- [x] Señales de compra/venta combinando μ/σ, momentum y ARIMA.
 - [x] API FastAPI y dashboard web conectado.
 - [x] Dashboard accesible por Tailscale.
 - [ ] Comparación automática entre proveedores alternativos.
@@ -97,8 +103,12 @@ Variables disponibles:
 │   ├── service.py            # descarga, cálculo y payload del dashboard
 │   ├── analytics/
 │   │   ├── stats.py          # retornos, volatilidad, drawdown
-│   │   ├── optimization.py   # máximo Sharpe y frontera eficiente
-│   │   └── forecast.py       # ARIMA y bandas de confianza
+│   │   ├── optimization.py   # máximo Sharpe, mínima varianza y frontera
+│   │   ├── portfolio.py      # perfiles, Top 10 e inversión
+│   │   ├── diagnostics.py    # ADF/KPSS, Ljung-Box, Jarque-Bera, ARCH-LM
+│   │   ├── volatility.py     # GARCH(1,1) de cartera y activos
+│   │   ├── signals.py        # señales de compra/venta
+│   │   └── forecast.py       # ARIMA, bandas y proyecciones
 │   ├── audit/quality.py      # controles de calidad de datos
 │   ├── api/app.py            # API FastAPI
 │   └── ingestion/
@@ -160,7 +170,16 @@ npm install
 npm run dev
 ```
 
-Abre `http://localhost:5173`. Vistas incluidas: Resumen, Datos, Auditoría, ARIMA y Markowitz. La web consume `/api/dashboard` a través del proxy de Vite y refresca cada 5 minutos.
+Abre `http://localhost:5173` (si el puerto está ocupado, Vite usa el siguiente y lo muestra en consola). Vistas incluidas: Resumen, Datos, Auditoría, ARIMA, Markowitz, Carteras, Top 10, Inversión, Señales y GARCH. La web consume `/api/dashboard` a través del proxy de Vite y refresca cada 5 minutos.
+
+| Vista | Qué muestra |
+|---|---|
+| Carteras | Los 5 perfiles con pesos, retorno esperado, volatilidad y Sharpe |
+| Top 10 | Score compuesto y la cartera reoptimizada con esos 10 activos |
+| Inversión | Acciones enteras comprables, efectivo residual y valor a 1/3/6 meses |
+| Señales | Avisos por activo combinando μ/σ, momentum y veredicto ARIMA |
+| ARIMA | Pronóstico del portafolio y diagnóstico individual por activo |
+| GARCH | Volatilidad condicional de la cartera Top 10 y de cada activo |
 
 ### Abrir desde otro dispositivo (Tailscale)
 
@@ -183,8 +202,13 @@ La API no se expone aparte: Vite proxya `/api` hacia `127.0.0.1:8000`. Mantén e
 1. yfinance descarga cierres ajustados de 20 activos + SPY (3 años).
 2. Se limpian precios, se calculan retornos logarítmicos y la covarianza anualizada con contracción.
 3. Markowitz maximiza el Sharpe (suma 1, sin cortos, tope por activo) y genera la frontera eficiente.
-4. ARIMA se ajusta sobre el logaritmo del precio del portafolio y se valida con una partición fuera de muestra.
-5. La auditoría revisa gaps contra el calendario real de SPY, nulos, precios inválidos, outliers y movimientos extremos.
+4. Sobre esa misma frontera se construyen 5 perfiles: mínima varianza, volatilidad intermedia, máximo Sharpe, máximo retorno y la unión de los cuatro.
+5. El Top 10 combina peso promedio en los perfiles, Sharpe individual y momentum de 6 meses; luego se reoptimiza a máximo Sharpe.
+6. La inversión usa acciones enteras: `piso(monto / precio)`, efectivo residual y proyección con el retorno mensual del activo.
+7. ARIMA se ajusta por activo: `d` se decide con ADF/KPSS, `p` y `q` por AIC, y se reportan supuestos, veredicto y MAPE fuera de muestra.
+8. GARCH(1,1) estima la volatilidad condicional anualizada del activo y de la cartera (retornos `R × w`).
+9. Las señales combinan μ/σ a 21 días, momentum y el veredicto ARIMA; son consejos, no órdenes.
+10. La auditoría revisa gaps contra el calendario real de SPY, nulos, precios inválidos, outliers y movimientos extremos.
 
 > Limitación actual: la performance es **in-sample**, porque los pesos se estiman con el mismo periodo que se evalúa. El siguiente paso es un backtest walk-forward. Los datos son educativos y no constituyen asesoría financiera.
 

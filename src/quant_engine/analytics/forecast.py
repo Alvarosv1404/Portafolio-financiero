@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -60,6 +61,144 @@ def _fit_and_forecast(
     mean = np.exp(np.asarray(forecast.predicted_mean, dtype=float))
     interval = np.exp(np.asarray(forecast.conf_int(alpha=0.05), dtype=float))
     return mean, interval[:, 0], interval[:, 1], float(model.aic), mape
+
+
+def _fit_best_order(
+    values: np.ndarray,
+    d: int,
+    max_p: int = 2,
+    max_q: int = 2,
+) -> tuple[Any, tuple[int, int, int]] | None:
+    """Busca ``(p, q)`` por AIC con ``d`` fijado por ADF/KPSS.
+
+    Se limita a ``p + q <= 2`` para que el ajuste de los 10 activos no bloquee
+    la API. Es una grilla pequeña, pero suficiente para retornos financieros.
+    """
+    from statsmodels.tsa.arima.model import ARIMA
+
+    best: tuple[float, tuple[int, int, int], Any] | None = None
+    for p in range(max_p + 1):
+        for q in range(max_q + 1):
+            if p + q > 2:
+                continue
+            try:
+                fitted = ARIMA(values, order=(p, d, q)).fit()
+            except Exception:
+                continue
+            if best is None or float(fitted.aic) < best[0]:
+                best = (float(fitted.aic), (p, d, q), fitted)
+    if best is None:
+        return None
+    return best[2], best[1]
+
+
+def _out_of_sample_mape(
+    values: np.ndarray,
+    order: tuple[int, int, int],
+    test_size: int = 60,
+) -> float | None:
+    """MAPE sobre los últimos días, ajustando el mismo orden con menos datos."""
+    from statsmodels.tsa.arima.model import ARIMA
+
+    if len(values) < 160:
+        return None
+    split = len(values) - min(test_size, max(len(values) // 5, 20))
+    try:
+        train = values[:split]
+        test = values[split:]
+        validation = ARIMA(train, order=order).fit()
+        predicted = np.asarray(
+            validation.get_forecast(steps=len(test)).predicted_mean, dtype=float
+        )
+        actual = np.exp(test)
+        forecast = np.exp(predicted)
+        mask = actual != 0
+        if not mask.any():
+            return None
+        return float(np.mean(np.abs((forecast[mask] - actual[mask]) / actual[mask])))
+    except Exception:
+        return None
+
+
+def forecast_asset_arima(
+    ticker: str,
+    prices: pd.Series,
+    horizon_days: int = 126,
+) -> dict[str, Any]:
+    """Ajusta ARIMA a un activo y devuelve el orden, supuestos y veredicto.
+
+    El objetivo no es solo pronosticar: también explicar *por qué* el modelo es
+    defendible (o no). Por eso se reportan ADF/KPSS, Ljung-Box, Jarque-Bera,
+    ARCH-LM, raíces, significancia de coeficientes y MAPE fuera de muestra.
+    """
+    from .diagnostics import arima_diagnostics, decide_differencing
+
+    series = prices.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
+    if len(series) < 90:
+        return {
+            "ticker": ticker,
+            "order": None,
+            "orderValues": None,
+            "aic": None,
+            "mape": None,
+            "converged": False,
+            "verdict": "Débil",
+            "summary": "Datos insuficientes: se necesitan al menos 90 observaciones.",
+            "assumptions": [],
+            "caveats": ["La serie es demasiado corta para un ARIMA estable."],
+        }
+
+    log_price = np.log(series)
+    values = log_price.to_numpy(dtype=float)
+    stationarity = decide_differencing(log_price)
+    d = int(stationarity["d"])
+
+    fitted = _fit_best_order(values, d=d)
+    if fitted is None:
+        return {
+            "ticker": ticker,
+            "order": None,
+            "orderValues": None,
+            "aic": None,
+            "mape": None,
+            "converged": False,
+            "verdict": "Débil",
+            "summary": "Ningún orden ARIMA(p,d,q) de la grilla convergió.",
+            "assumptions": [],
+            "caveats": ["Prueba con una ventana de datos más larga o revisa la serie."],
+        }
+
+    model, order = fitted
+    mape = _out_of_sample_mape(values, order)
+    diagnostics = arima_diagnostics(model, stationarity, mape)
+
+    forecast = model.get_forecast(steps=horizon_days)
+    predicted = np.exp(np.asarray(forecast.predicted_mean, dtype=float))
+    intervals = np.exp(np.asarray(forecast.conf_int(alpha=0.05), dtype=float))
+
+    def _at(index: int) -> float:
+        return round(float(predicted[min(index, len(predicted) - 1)]), 2)
+
+    p, d_value, q = order
+    return {
+        "ticker": ticker,
+        "order": f"ARIMA({p},{d_value},{q})",
+        "orderValues": [p, d_value, q],
+        "aic": round(float(model.aic), 2),
+        "mape": round(mape * 100, 2) if mape is not None else None,
+        "converged": True,
+        "verdict": diagnostics["verdict"],
+        "summary": diagnostics["summary"],
+        "assumptions": diagnostics["assumptions"],
+        "caveats": diagnostics["caveats"],
+        "passedCount": diagnostics["passedCount"],
+        "total": diagnostics["total"],
+        "projectedPrice1m": _at(20),
+        "projectedPrice3m": _at(62),
+        "projectedPrice6m": _at(125),
+        "lower6m": round(float(intervals[125, 0]), 2) if len(intervals) > 125 else None,
+        "upper6m": round(float(intervals[125, 1]), 2) if len(intervals) > 125 else None,
+    }
 
 
 def forecast_portfolio(
@@ -154,4 +293,4 @@ def forecast_portfolio(
     )
 
 
-__all__ = ["ForecastResult", "forecast_portfolio"]
+__all__ = ["ForecastResult", "forecast_asset_arima", "forecast_portfolio"]

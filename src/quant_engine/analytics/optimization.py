@@ -1,4 +1,4 @@
-"""Optimización de portafolios: máximo Sharpe y frontera eficiente."""
+"""Optimización de portafolios: máximo Sharpe, mínima varianza, volatilidad objetivo."""
 
 from __future__ import annotations
 
@@ -33,6 +33,116 @@ def _greedy_extreme(mu: np.ndarray, max_weight: float, highest: bool) -> np.ndar
         if remaining <= 1e-12:
             break
     return weights
+
+
+def min_variance_weights(
+    expected_returns: pd.Series,
+    covariance: pd.DataFrame,
+    max_weight: float = 0.18,
+) -> pd.Series:
+    """Pesos que minimizan la varianza del portafolio, sin cortos y con tope por activo."""
+    tickers = list(expected_returns.index)
+    n = len(tickers)
+    if n == 0:
+        raise ValueError("El universo no contiene activos.")
+
+    mu = expected_returns.to_numpy(dtype=float)
+    sigma = covariance.loc[tickers, tickers].to_numpy(dtype=float)
+    bounds = [(0.0, max_weight)] * n
+    constraints = [{"type": "eq", "fun": lambda w: float(w.sum() - 1.0)}]
+
+    def negative_variance(w: np.ndarray) -> float:
+        return float(w @ sigma @ w)
+
+    x0 = _equal_weights(n)
+    result = minimize(
+        negative_variance,
+        x0,
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints,
+        options={"maxiter": 800, "ftol": 1e-12},
+    )
+    if not result.success:
+        return pd.Series(_equal_weights(n), index=tickers, name="weight")
+    weights = np.asarray(result.x, dtype=float)
+    weights = _normalize(weights, max_weight)
+    return pd.Series(weights, index=tickers, name="weight")
+
+
+def target_volatility_weights(
+    expected_returns: pd.Series,
+    covariance: pd.DataFrame,
+    target_vol: float,
+    max_weight: float = 0.18,
+    risk_free: float = 0.04,
+) -> pd.Series:
+    """Pesos que alcanzan una volatilidad objetivo con tope por activo."""
+    tickers = list(expected_returns.index)
+    n = len(tickers)
+    if n == 0:
+        raise ValueError("El universo no contiene activos.")
+
+    mu = expected_returns.to_numpy(dtype=float)
+    sigma = covariance.loc[tickers, tickers].to_numpy(dtype=float)
+    bounds = [(0.0, max_weight)] * n
+    constraints = [
+        {"type": "eq", "fun": lambda w: float(w.sum() - 1.0)},
+        {"type": "eq", "fun": lambda w: float(w @ sigma @ w - target_vol ** 2)},
+    ]
+
+    def objective(w: np.ndarray) -> float:
+        return -float(w @ mu)
+
+    x0 = _equal_weights(n)
+    result = minimize(
+        objective,
+        x0,
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints,
+        options={"maxiter": 800, "ftol": 1e-10},
+    )
+    if not result.success:
+        return pd.Series(_equal_weights(n), index=tickers, name="weight")
+    weights = np.asarray(result.x, dtype=float)
+    weights = _normalize(weights, max_weight)
+    return pd.Series(weights, index=tickers, name="weight")
+
+
+def max_return_weights(
+    expected_returns: pd.Series,
+    covariance: pd.DataFrame,
+    max_weight: float = 0.18,
+) -> pd.Series:
+    """Pesos que maximizan el retorno esperado con suma 1 y tope por activo (sin riesgo libre)."""
+    tickers = list(expected_returns.index)
+    n = len(tickers)
+    if n == 0:
+        raise ValueError("El universo no contiene activos.")
+
+    mu = expected_returns.to_numpy(dtype=float)
+    sigma = covariance.loc[tickers, tickers].to_numpy(dtype=float)
+    bounds = [(0.0, max_weight)] * n
+    constraints = [{"type": "eq", "fun": lambda w: float(w.sum() - 1.0)}]
+
+    def negative_return(w: np.ndarray) -> float:
+        return -float(w @ mu)
+
+    x0 = _equal_weights(n)
+    result = minimize(
+        negative_return,
+        x0,
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints,
+        options={"maxiter": 800, "ftol": 1e-12},
+    )
+    if not result.success:
+        return pd.Series(_equal_weights(n), index=tickers, name="weight")
+    weights = np.asarray(result.x, dtype=float)
+    weights = _normalize(weights, max_weight)
+    return pd.Series(weights, index=tickers, name="weight")
 
 
 def max_sharpe_weights(
@@ -145,4 +255,10 @@ def efficient_frontier(
     return unique
 
 
-__all__ = ["efficient_frontier", "max_sharpe_weights"]
+__all__ = [
+    "min_variance_weights",
+    "target_volatility_weights",
+    "max_return_weights",
+    "efficient_frontier",
+    "max_sharpe_weights",
+]

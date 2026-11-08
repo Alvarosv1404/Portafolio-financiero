@@ -1,5 +1,5 @@
 .venv/
-data/
+/data/
 
 # Credenciales: el .env real nunca se versiona.
 .env

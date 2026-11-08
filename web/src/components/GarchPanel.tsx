@@ -39,6 +39,10 @@ export function GarchPanel() {
   const longRun = asset?.unconditionalVolatility
 
   const maxVol = Math.max(...path, 1)
+  const maxAssetVol = Math.max(
+    ...Object.values(perAsset).map((item) => item.finalVolatility),
+    1,
+  )
 
   return (
     <div className="stack">
@@ -185,7 +189,7 @@ export function GarchPanel() {
                 <span className="garch-track">
                   <span
                     style={{
-                      width: `${Math.min((item.finalVolatility / Math.max(finalVolatility, 1)) * 100, 100)}%`,
+                      width: `${Math.min((item.finalVolatility / maxAssetVol) * 100, 100)}%`,
                     }}
                   />
                 </span>

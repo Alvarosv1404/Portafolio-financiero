@@ -20,7 +20,13 @@ import { ProviderGrid } from './components/ProviderGrid'
 import { ProviderComparison } from './components/ProviderComparison'
 import { AuditPanel } from './components/AuditPanel'
 import { ForecastPanel } from './components/ForecastPanel'
+import { AssetArimaPanel } from './components/AssetArimaPanel'
 import { OptimizationPanel } from './components/OptimizationPanel'
+import { ProfilesPanel } from './components/ProfilesPanel'
+import { Top10Panel } from './components/Top10Panel'
+import { InvestmentPanel } from './components/InvestmentPanel'
+import { SignalsPanel } from './components/SignalsPanel'
+import { GarchPanel } from './components/GarchPanel'
 import { UploadPanel } from './components/UploadPanel'
 import { SectionHeader } from './components/SectionHeader'
 import { StatusBadge } from './components/StatusBadge'
@@ -46,6 +52,26 @@ const viewMeta: Record<View, { title: string; subtitle: string }> = {
   optimization: {
     title: 'Optimización Markowitz',
     subtitle: 'Frontera eficiente, restricciones y asignación objetivo.',
+  },
+  profiles: {
+    title: 'Carteras',
+    subtitle: 'Los 5 perfiles calculados sobre la misma frontera eficiente.',
+  },
+  top10: {
+    title: 'Top 10 activos',
+    subtitle: 'Selección por score compuesto y reoptimización de la cartera.',
+  },
+  investment: {
+    title: 'Inversión',
+    subtitle: 'Cuántas acciones puedes comprar y cuánto valdría tu inversión.',
+  },
+  signals: {
+    title: 'Señales',
+    subtitle: 'Avisos de compra, venta y vigilancia según μ/σ, momentum y ARIMA.',
+  },
+  garch: {
+    title: 'Volatilidad GARCH',
+    subtitle: 'Volatilidad condicional de la cartera y de cada activo del Top 10.',
   },
 }
 
@@ -211,10 +237,11 @@ function ForecastView() {
       <SectionHeader
         eyebrow="Time series"
         title="Pronóstico con ARIMA"
-        description="Modelo sobre el logaritmo del precio del portafolio, con validación fuera de muestra y bandas de confianza."
+        description="Modelo del portafolio y diagnóstico individual por activo: orden elegido, supuestos, veredicto y proyección."
         action={<StatusBadge tone="info">{data.forecast.model}</StatusBadge>}
       />
       <ForecastPanel />
+      <AssetArimaPanel />
     </div>
   )
 }
@@ -234,9 +261,105 @@ function OptimizationView() {
   )
 }
 
+function ProfilesView() {
+  const { data } = useDashboard()
+  const profiles = data.meta.profiles ?? {}
+  return (
+    <div className="stack">
+      <SectionHeader
+        eyebrow="Portfolios"
+        title="5 carteras, una misma frontera"
+        description="Bajo riesgo busca mínima varianza; moderado, volatilidad intermedia; ideal, máximo Sharpe; riesgoso, máximo retorno. Total une los activos de los cuatro."
+        action={
+          <StatusBadge tone="info">{Object.keys(profiles).length} perfiles calculados</StatusBadge>
+        }
+      />
+      <ProfilesPanel />
+    </div>
+  )
+}
+
+function Top10View() {
+  const { data } = useDashboard()
+  return (
+    <div className="stack">
+      <SectionHeader
+        eyebrow="Selection"
+        title="Los 10 mejores activos"
+        description="Score compuesto por peso en perfiles, Sharpe individual y momentum de 6 meses. Con esos 10 se recalcula Markowitz a máximo Sharpe."
+        action={<StatusBadge tone="success">{data.meta.top10?.length ?? data.assets.length} activos</StatusBadge>}
+      />
+      <Top10Panel />
+    </div>
+  )
+}
+
+function InvestmentView() {
+  return (
+    <div className="stack">
+      <SectionHeader
+        eyebrow="Capital"
+        title="Simulador de inversión"
+        description="Elige un monto y un activo. El motor calcula acciones enteras, efectivo residual y el valor proyectado a 1, 3 y 6 meses."
+      />
+      <InvestmentPanel />
+    </div>
+  )
+}
+
+function SignalsView() {
+  return (
+    <div className="stack">
+      <SectionHeader
+        eyebrow="Signals"
+        title="Avisos de compra y venta"
+        description="Señales estadísticas por activo combinando μ/σ a 21 días, momentum y el veredicto ARIMA. Son consejos: la decisión final es tuya."
+      />
+      <SignalsPanel />
+    </div>
+  )
+}
+
+function GarchView() {
+  return (
+    <div className="stack">
+      <SectionHeader
+        eyebrow="Volatility"
+        title="GARCH(1,1)"
+        description="Volatilidad condicional anualizada de la cartera Top 10 y de cada activo. La cartera se calcula sobre sus propios retornos (R × w)."
+      />
+      <GarchPanel />
+    </div>
+  )
+}
+
+const viewIds: View[] = [
+  'overview',
+  'data',
+  'audit',
+  'forecast',
+  'optimization',
+  'profiles',
+  'top10',
+  'investment',
+  'signals',
+  'garch',
+]
+
+function readViewFromHash(): View {
+  const hash = window.location.hash.replace('#', '')
+  return viewIds.includes(hash as View) ? (hash as View) : 'overview'
+}
+
 function Shell() {
-  const [view, setView] = useState<View>('overview')
+  const [view, setView] = useState<View>(readViewFromHash)
   const { data, status, refreshing, lastFetched, refresh } = useDashboard()
+
+  const changeView = (next: View) => {
+    setView(next)
+    window.history.replaceState(null, '', `#${next}`)
+  }
+
   const meta = viewMeta[view]
   const isLive = data.meta.isLive && status !== 'loading'
   const updated = lastFetched
@@ -250,7 +373,7 @@ function Shell() {
 
   return (
     <div className="app-shell">
-      <Sidebar active={view} onChange={setView} isLive={isLive} />
+      <Sidebar active={view} onChange={changeView} isLive={isLive} />
       <main className="main">
         <Topbar
           title={meta.title}
@@ -266,6 +389,11 @@ function Shell() {
           {view === 'audit' && <AuditView />}
           {view === 'forecast' && <ForecastView />}
           {view === 'optimization' && <OptimizationView />}
+          {view === 'profiles' && <ProfilesView />}
+          {view === 'top10' && <Top10View />}
+          {view === 'investment' && <InvestmentView />}
+          {view === 'signals' && <SignalsView />}
+          {view === 'garch' && <GarchView />}
         </div>
         <footer className="app-footer">
           <span>Quant Engine · {isLive ? 'Datos reales vía yfinance' : 'Demo visual'}</span>

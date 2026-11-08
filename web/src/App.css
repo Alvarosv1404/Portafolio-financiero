@@ -1366,6 +1366,506 @@ tbody tr:last-child td {
 }
 
 /* ---------------------------------------------------------------------------
+   Portfolio profiles
+--------------------------------------------------------------------------- */
+
+.profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+  background: rgba(148, 163, 184, 0.025);
+  padding: 14px;
+}
+
+.profile-card-total {
+  border-color: rgba(45, 212, 191, 0.22);
+  background: rgba(45, 212, 191, 0.035);
+}
+
+.profile-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.profile-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.profile-title strong {
+  display: block;
+  color: #e8eef6;
+  font-size: 12.5px;
+}
+
+.profile-title small {
+  display: block;
+  margin-top: 1px;
+  color: #6f8098;
+  font-size: 9.5px;
+}
+
+.profile-icon {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(45, 212, 191, 0.08);
+  color: #5eead4;
+}
+
+.profile-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  padding: 9px 0;
+}
+
+.profile-metrics span {
+  display: block;
+  color: #6f8098;
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.profile-metrics strong {
+  display: block;
+  margin-top: 3px;
+  color: #e8eef6;
+  font-size: 12px;
+}
+
+.profile-holdings {
+  display: grid;
+  gap: 7px;
+}
+
+.holding-row {
+  display: grid;
+  grid-template-columns: 52px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.holding-ticker {
+  color: #cbd5e1;
+  font-size: 10.5px;
+  font-weight: 650;
+}
+
+.holding-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.holding-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2dd4bf, #38bdf8);
+}
+
+.holding-weight {
+  color: #94a3b8;
+  font-size: 10px;
+  text-align: right;
+}
+
+.profile-footnote,
+.panel-footnote {
+  margin: 0;
+  color: #5f748f;
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------------
+   Selectors and pills
+--------------------------------------------------------------------------- */
+
+.selector-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.pill {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.05);
+  color: #a9b8ca;
+  padding: 6px 11px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.pill:hover {
+  border-color: rgba(45, 212, 191, 0.28);
+  color: #d9f6f1;
+}
+
+.pill-active {
+  border-color: rgba(45, 212, 191, 0.4);
+  background: rgba(45, 212, 191, 0.12);
+  color: #5eead4;
+}
+
+/* ---------------------------------------------------------------------------
+   GARCH
+--------------------------------------------------------------------------- */
+
+.garch-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.garch-summary > div {
+  border: 1px solid rgba(148, 163, 184, 0.09);
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.025);
+  padding: 10px 12px;
+}
+
+.garch-summary span {
+  display: block;
+  color: #6f8098;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.garch-summary strong {
+  display: block;
+  margin-top: 3px;
+  color: #e8eef6;
+  font-size: 13px;
+}
+
+.garch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+  gap: 8px;
+}
+
+.garch-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.025);
+  color: inherit;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.garch-card:hover,
+.garch-card-active {
+  border-color: rgba(45, 212, 191, 0.3);
+  background: rgba(45, 212, 191, 0.06);
+}
+
+.garch-ticker {
+  color: #a9b8ca;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.garch-card strong {
+  color: #e8eef6;
+  font-size: 13.5px;
+}
+
+.garch-track {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.garch-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2dd4bf, #fbbf24);
+}
+
+/* ---------------------------------------------------------------------------
+   Investment
+--------------------------------------------------------------------------- */
+
+.capital-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 1.2fr) minmax(220px, 1.6fr) minmax(190px, 1.2fr);
+  align-items: end;
+  gap: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+}
+
+.capital-field {
+  display: grid;
+  gap: 5px;
+}
+
+.capital-field > span {
+  color: #6f8098;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.capital-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 11px;
+  background: rgba(8, 14, 24, 0.7);
+  color: #5eead4;
+  padding: 0 11px;
+}
+
+.capital-input input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #e8eef6;
+  padding: 9px 0;
+  font-size: 12.5px;
+  outline: none;
+}
+
+.asset-select {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 11px;
+  background: rgba(8, 14, 24, 0.85);
+  color: #e8eef6;
+  padding: 9px 11px;
+  font-size: 12px;
+  outline: none;
+}
+
+.quick-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.investment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.inv-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 14px;
+  background: rgba(148, 163, 184, 0.025);
+  padding: 12px;
+}
+
+.inv-card-highlight {
+  border-color: rgba(45, 212, 191, 0.25);
+  background: rgba(45, 212, 191, 0.055);
+}
+
+.inv-label {
+  color: #6f8098;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.inv-value {
+  color: #e8eef6;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.inv-card small {
+  color: #6f8098;
+  font-size: 9.5px;
+}
+
+.projection-table {
+  display: grid;
+  gap: 8px;
+}
+
+.projection-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.02);
+  padding: 10px 12px;
+}
+
+.projection-row small {
+  display: block;
+  margin-top: 2px;
+  color: #6f8098;
+  font-size: 9.5px;
+}
+
+.projection-row strong {
+  color: #e8eef6;
+  font-size: 12.5px;
+}
+
+.proj-label {
+  display: block;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.proj-delta {
+  font-size: 11px;
+  font-weight: 650;
+  text-align: right;
+}
+
+.row-selected {
+  background: rgba(45, 212, 191, 0.055);
+}
+
+.empty-state {
+  margin: 0;
+  color: #8494aa;
+  padding: 16px;
+  font-size: 11.5px;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+   Asset ARIMA diagnostics
+--------------------------------------------------------------------------- */
+
+.arima-summary {
+  margin: 0 0 10px;
+  color: #cbd5e1;
+  font-size: 11.5px;
+  line-height: 1.65;
+}
+
+.arima-caveats {
+  margin-top: 4px;
+}
+
+.arima-caveats li::before {
+  background: #fbbf24;
+}
+
+.arima-assumptions {
+  display: grid;
+  gap: 8px;
+}
+
+.assumption-row {
+  display: flex;
+  gap: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.09);
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.025);
+  padding: 10px 12px;
+}
+
+.assumption-pass .assumption-icon {
+  color: #6ee7b7;
+}
+
+.assumption-fail .assumption-icon {
+  color: #fda4af;
+}
+
+.assumption-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.assumption-copy strong {
+  display: block;
+  color: #e8eef6;
+  font-size: 11.5px;
+}
+
+.assumption-copy small {
+  display: block;
+  margin-top: 1px;
+  color: #7c8ca3;
+  font-size: 9.5px;
+}
+
+.assumption-copy p {
+  margin: 4px 0 0;
+  color: #8494aa;
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.arima-projection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.02);
+  padding: 10px 12px;
+}
+
+.arima-projection strong {
+  color: #e8eef6;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.arima-projection small {
+  color: #6f8098;
+  font-size: 9.5px;
+}
+
+/* ---------------------------------------------------------------------------
    Responsive
 --------------------------------------------------------------------------- */
 
@@ -1394,6 +1894,15 @@ tbody tr:last-child td {
 
   .audit-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .capital-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .capital-row > :nth-child(2) {
+    grid-column: 1 / -1;
+    order: 3;
   }
 }
 
@@ -1474,8 +1983,27 @@ tbody tr:last-child td {
   .provider-grid,
   .audit-grid,
   .metric-strip,
-  .template-grid {
+  .template-grid,
+  .capital-row,
+  .profiles-grid {
     grid-template-columns: 1fr;
+  }
+
+  .capital-row > :nth-child(2) {
+    grid-column: auto;
+    order: 0;
+  }
+
+  .garch-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .projection-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .projection-row .proj-delta {
+    grid-column: 2;
   }
 
   .topbar {

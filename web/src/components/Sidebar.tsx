@@ -1,14 +1,29 @@
 import {
   Activity,
   Database,
+  Gauge,
   LayoutDashboard,
+  ListOrdered,
   PieChart as PieChartIcon,
+  Radio,
   ShieldCheck,
   TrendingUp,
+  Users,
+  Wallet,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-export type View = 'overview' | 'data' | 'audit' | 'forecast' | 'optimization'
+export type View =
+  | 'overview'
+  | 'data'
+  | 'audit'
+  | 'forecast'
+  | 'optimization'
+  | 'profiles'
+  | 'investment'
+  | 'signals'
+  | 'garch'
+  | 'top10'
 
 interface NavItem {
   id: View
@@ -23,6 +38,11 @@ const navItems: NavItem[] = [
   { id: 'audit', label: 'Auditoría', hint: 'Calidad de datos', icon: ShieldCheck },
   { id: 'forecast', label: 'ARIMA', hint: 'Pronóstico', icon: TrendingUp },
   { id: 'optimization', label: 'Markowitz', hint: 'Frontera eficiente', icon: PieChartIcon },
+  { id: 'profiles', label: 'Carteras', hint: '5 perfiles y métricas', icon: Users },
+  { id: 'top10', label: 'Top 10', hint: 'Selección y reoptimización', icon: ListOrdered },
+  { id: 'investment', label: 'Inversión', hint: 'Acciones y proyección', icon: Wallet },
+  { id: 'signals', label: 'Señales', hint: 'μ/σ y momentum', icon: Radio },
+  { id: 'garch', label: 'GARCH', hint: 'Volatilidad cartera/activo', icon: Gauge },
 ]
 
 interface SidebarProps {
